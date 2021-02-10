@@ -7,7 +7,7 @@ let package = Package(
     name: "AsyncDemo",
     products: [
         // Products define the executables and libraries a package produces, and make them visible to other packages.
-        .library(
+        .executable(
             name: "AsyncDemo",
             targets: ["AsyncDemo"]),
     ],
@@ -20,9 +20,12 @@ let package = Package(
         // Targets can depend on other targets in this package, and on products in packages this package depends on.
         .target(
             name: "AsyncDemo",
-            dependencies: []),
-        .testTarget(
-            name: "AsyncDemoTests",
-            dependencies: ["AsyncDemo"]),
+            dependencies: [],
+          swiftSettings: [
+              .unsafeFlags([
+                  "-Xfrontend",
+                  "-enable-experimental-concurrency"
+              ])
+          ])
     ]
 )
