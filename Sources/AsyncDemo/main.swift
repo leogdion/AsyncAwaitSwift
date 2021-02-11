@@ -107,16 +107,60 @@ func markdowns () async throws -> [String] {
   }
 }
 
+func factorsOf(_ number : Int) async throws -> [Int] {
+  let value = abs(number)
+  var factors = [Int]()
+  var maxDividend = Int.max
+  for divisor in (1...(value/2 - 1)) {
+    guard divisor < maxDividend else {
+      return factors
+    }
+    let remainder = value % divisor
+    guard remainder == 0 else {
+      continue
+    }
+    let dividend = value / divisor
+    let newFactors = dividend == divisor ? [divisor] : [divisor, dividend]
+    factors.append(contentsOf: newFactors)
+    maxDividend = min(dividend, maxDividend)
+  }
+  return factors
+}
+
+extension Array {
+  func map<Result>(_ closure: @escaping @concurrent (Element) async throws -> Result) async throws -> [Result]  {
+    return try await Task.withGroup(resultType: Result.self, returning: [Result].self) { group in
+      for element in self {
+        await group.add {
+          try await closure(element)
+        }
+      }
+      var collected = [Result]()
+      collected.reserveCapacity(self.count)
+      while let value = try await group.next() {
+        collected.append(value)
+      }
+      return collected
+    }
+  }
+}
 
 runAsyncAndBlock {
-  let valueArray : [Int]
+  let values = (0...4).map{ _ in
+    Int.random(in: 1000...10000)
+  }
+  print(values)
+  let valuesArray : [[Int]]
   do {
-    valueArray = try await values(withCount: 10)
+    
+    valuesArray = try await values.map({ value in
+      try await factorsOf(value)
+    })
   } catch {
     debugPrint(error)
     return
   }
-  debugPrint(valueArray)
+  debugPrint(valuesArray)
 }
 
 
